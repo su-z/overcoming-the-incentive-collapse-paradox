@@ -1,0 +1,25 @@
+# Local datasets and generated experiment outputs
+/data/
+/outputs/
+/paper/
+
+# Local agent/runtime artifacts
+/.boss-plan-executor/
+
+# Python caches and build artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# Local environments
+.venv/
+venv/
+.env
+
+# OS/editor noise
+.DS_Store

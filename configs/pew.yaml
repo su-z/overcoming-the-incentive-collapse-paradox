@@ -1,0 +1,170 @@
+experiment: pew_post_election
+
+seeds:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+  - 15
+  - 16
+  - 17
+  - 18
+  - 19
+  - 20
+  - 21
+  - 22
+  - 23
+  - 24
+  - 25
+  - 26
+  - 27
+  - 28
+  - 29
+  - 30
+  - 31
+  - 32
+  - 33
+  - 34
+  - 35
+  - 36
+  - 37
+  - 38
+  - 39
+  - 40
+  - 41
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  - 47
+  - 48
+  - 49
+  - 50
+  - 51
+  - 52
+  - 53
+  - 54
+  - 55
+  - 56
+  - 57
+  - 58
+  - 59
+  - 60
+  - 61
+  - 62
+  - 63
+  - 64
+  - 65
+  - 66
+  - 67
+  - 68
+  - 69
+  - 70
+  - 71
+  - 72
+  - 73
+  - 74
+  - 75
+  - 76
+  - 77
+  - 78
+  - 79
+  - 80
+  - 81
+  - 82
+  - 83
+  - 84
+  - 85
+  - 86
+  - 87
+  - 88
+  - 89
+  - 90
+  - 91
+  - 92
+  - 93
+  - 94
+  - 95
+  - 96
+  - 97
+  - 98
+  - 99
+smoke_seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49]
+prediction_seeds: [0]
+smoke_prediction_seeds: [0]
+
+confidence_level: 0.90
+baseline_effort: 0.8
+
+data:
+  raw_file: data/pew/ATP W79.sav
+  weight_column: WEIGHT_W79
+  outcomes:
+    biden:
+      column_aliases: [ELECTBIDENMSSG_W79, ELECTBID]
+      estimand: weighted_mean_approval
+    trump:
+      column_aliases: [ELECTTRUMPMSSG_W79, ELECTTRU]
+      estimand: weighted_mean_approval
+  covariates:
+    - F_AGECAT
+    - F_GENDER
+    - F_EDUCCAT
+    - F_RACETHNMOD
+    - F_PARTYSUM_FINAL
+    - F_IDEO
+    - F_INC_SDT1
+    - F_CREGION
+    - F_REG
+    - WEIGHT_W79
+  preprocessing:
+    binary_response: "Map approval/favorable message responses to 1 and disapproval/unfavorable responses to 0; drop missing, refused, and skipped responses."
+    weights: "Use WEIGHT_W79 for survey-weighted Pew estimands and unweighted model fitting unless an experiment explicitly overrides this."
+
+prediction_model:
+  family: gradient_boosted_trees
+  preferred_package: xgboost
+  validation_fraction: 0.25
+  uncertainty_score: conditional_squared_residual
+
+incentive:
+  q: linear
+  cost: quadratic
+  utility: risk_neutral
+  w0: 0.64
+  k: 1.0
+  rho_grid: [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.50]
+  bonus_policy: risk_neutral_optimal
+  bonus_formula: "b_i = sqrt(w0) / rho"
+  induced_effort_formula: "e_i = rho * b_i"
+  budget_model: "sum_i ((rho*b_i*q(e_i)+w0)*pi_i)+rho*k <= B"
+  baseline_payment_model: linear_accuracy_based
+  ai_error_floor: 0.10
+
+sampling:
+  active_score: sqrt_conditional_error
+  clip_probabilities: true
+  baseline_tau_grid: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+  baseline_tau_selection: minimize_estimated_variance
+
+budget_grid:
+  smoke: [250, 350, 500, 700, 900]
+  full: [250, 500, 1000, 2000, 4000, 6000]
+  units: expected_query_cost
+
+assumptions:
+  - "Numeric budget grids are configured defaults in expected query-cost units."
+  - "w0=0.64 makes the risk-neutral optimal effort sqrt(w0)=0.8, matching the paper's baseline effort scale."
+  - "k is treated as the global sentinel construction/verification cost in the main-text budget, not as a per-query cost."
